@@ -480,8 +480,9 @@ function comboParts() {
   };
 }
 
-function promptZh() {
-  var x = comboParts();
+var COMBO_MODE = "links";
+
+function linksZh(x) {
   return [
     "【角色生成任务】",
     "",
@@ -515,8 +516,28 @@ function promptZh() {
   ].join(NL);
 }
 
-function promptEn() {
-  var x = comboParts();
+function singleZh(x) {
+  return [
+    "【角色生成任务 · 单图参考】",
+    "",
+    "我随这条消息附了 1 张参考图，是一张「三联图」，从左到右依次是：",
+    "① 左：脸 —— " + x.f.id + "（" + x.fDesc + "）",
+    "② 中：服装 —— " + x.c.id + "（" + x.cCat + "：" + x.cZh + "）",
+    "③ 右：姿势 —— " + x.p.id + " " + x.p.zh + "（" + x.pSer + "·" + x.p.cat + "，" + COMBO_ANGLE + "机位）",
+    "",
+    "要求",
+    "1. 三联图只是素材：不要原样输出这张拼图，也不要保留它的分格、边框和文字标注。",
+    "2. 人物以「左格」的脸为唯一依据：五官、脸型、骨相、发型保持一致，是同一个人。",
+    "3. 服装整套换成「中格」的造型：保留单品、配色、材质与配饰。",
+    "4. 姿势按「右格」摆放：注意机位与透视，四肢自然、手指正常、不穿模。",
+    "5. 画面：3:4 竖构图，全身入镜，干净背景，柔和影棚光，写实摄影质感。",
+    "6. 不要出现文字、水印或多余人物。",
+    "",
+    "素材编号：脸 " + x.f.id + " / 服装 " + x.c.id + " / 姿势 " + x.p.id
+  ].join(NL);
+}
+
+function linksEn(x) {
   return [
     "TASK: generate one 3:4 portrait from three reference images.",
     "",
@@ -547,6 +568,36 @@ function promptEn() {
   ].join(NL);
 }
 
+function singleEn(x) {
+  return [
+    "TASK: generate one 3:4 portrait. The single attached image is a three-panel reference sheet.",
+    "",
+    "PANELS (left to right)",
+    "1) LEFT = face: " + x.f.id + " (" + x.fDescEn + ")",
+    "2) MIDDLE = outfit: " + x.c.id + " (" + x.cCatEn + ": " + x.cEn + ")",
+    "3) RIGHT = pose: " + x.p.id + " " + x.p.zh + " (" + x.pSer + " / " + x.p.cat + ", " + COMBO_ANGLE + " view)",
+    "",
+    "REQUIREMENTS",
+    "1. The sheet is reference material only: do not reproduce the collage, its frames or its labels.",
+    "2. Use the LEFT panel as the ONLY face reference: same identity, facial features, bone structure and hairstyle.",
+    "3. Replace the outfit with the MIDDLE panel: keep items, colours, fabrics and accessories.",
+    "4. Match the pose in the RIGHT panel: correct camera angle, natural limbs, correct fingers.",
+    "5. Output: 3:4 vertical, full body in frame, clean background, soft studio light, photorealistic.",
+    "6. No text, no watermark, no extra people.",
+    "",
+    "IDs: face " + x.f.id + " / outfit " + x.c.id + " / pose " + x.p.id
+  ].join(NL);
+}
+
+function promptZh() {
+  var x = comboParts();
+  return COMBO_MODE === "single" ? singleZh(x) : linksZh(x);
+}
+function promptEn() {
+  var x = comboParts();
+  return COMBO_MODE === "single" ? singleEn(x) : linksEn(x);
+}
+
 function comboUrls() {
   var x = comboParts();
   return [
@@ -562,14 +613,113 @@ function comboUrls() {
   ].join(NL);
 }
 
-function copyBtnText(btn, text, label) {
-  var done = function () {
-    btn.textContent = "已复制 ✓";
+function loadImage(url, cors) {
+  return new Promise(function (resolve, reject) {
+    var im = new Image();
+    if (cors) im.crossOrigin = "anonymous";
+    im.onload = function () { resolve(im); };
+    im.onerror = function () { reject(new Error("load failed")); };
+    im.src = url;
+  });
+}
+
+function makeSheet() {
+  return new Promise(function (resolve, reject) {
+    var x = comboParts();
+    var panels = [
+      { url: x.urls.face, fb: thumb("face", x.f.id), label: "① 脸 · " + x.f.id, sub: x.fDesc },
+      { url: x.urls.costume, fb: thumb("costume", x.c.id), label: "② 服装 · " + x.c.id, sub: x.cCat + " · " + x.c.zh.slice(0, 4).join(" ") },
+      { url: x.urls.pose, fb: thumb("pose", x.pBase), label: "③ 姿势 · " + x.p.id, sub: x.p.zh }
+    ];
+    var loaded = [];
+    var i = 0;
+    function step() {
+      if (i >= panels.length) { draw(); return; }
+      var it = panels[i++];
+      loadImage(it.url, true).then(function (im) {
+        loaded.push({ img: im, it: it }); step();
+      }).catch(function () {
+        loadImage(it.fb, false).then(function (im) {
+          loaded.push({ img: im, it: it }); step();
+        }).catch(function () {
+          loaded.push({ img: null, it: it }); step();
+        });
+      });
+    }
+    function draw() {
+      var PW = 900, PH = 1200, GAP = 24, PAD = 40, LAB = 100;
+      var W = PAD * 2 + PW * 3 + GAP * 2, H = PAD + PH + LAB + PAD;
+      var c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      var g = c.getContext("2d");
+      g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
+      loaded.forEach(function (o, k) {
+        var ox = PAD + k * (PW + GAP);
+        if (o.img) {
+          var s = Math.min(PW / o.img.width, PH / o.img.height);
+          var w = o.img.width * s, h = o.img.height * s;
+          g.drawImage(o.img, ox + (PW - w) / 2, PAD + (PH - h) / 2, w, h);
+        } else {
+          g.fillStyle = "#f2f2f4"; g.fillRect(ox, PAD, PW, PH);
+        }
+        g.fillStyle = "#1b1b1f";
+        g.font = "600 34px -apple-system, 'PingFang SC', sans-serif";
+        g.fillText(o.it.label, ox, PAD + PH + 46);
+        g.fillStyle = "#6b6b76";
+        g.font = "26px -apple-system, 'PingFang SC', sans-serif";
+        g.fillText(o.it.sub, ox, PAD + PH + 84);
+      });
+      c.toBlob(function (blob) {
+        if (blob) resolve(blob); else reject(new Error("toBlob failed"));
+      }, "image/png");
+    }
+    step();
+  });
+}
+
+function saveBlob(blob, name) {
+  var u = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = u; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 3000);
+}
+
+function sheetName() {
+  var x = comboParts();
+  return "refs_" + x.f.id + "_" + x.c.id + "_" + x.p.id + ".png";
+}
+
+function downloadSheet(btn) {
+  var label = btn.textContent;
+  btn.textContent = "生成中…";
+  makeSheet().then(function (blob) {
+    saveBlob(blob, sheetName());
+    btn.textContent = "已下载 ✓";
     setTimeout(function () { btn.textContent = label; }, 1600);
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
-  } else { fallbackCopy(text, done); }
+  }).catch(function () {
+    btn.textContent = "生成失败，试试逐张下载";
+    setTimeout(function () { btn.textContent = label; }, 2400);
+  });
+}
+
+function copySheet(btn) {
+  var label = btn.textContent;
+  btn.textContent = "生成中…";
+  makeSheet().then(function (blob) {
+    if (navigator.clipboard && window.ClipboardItem) {
+      return navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(function () {
+        btn.textContent = "已复制图片 ✓";
+        setTimeout(function () { btn.textContent = label; }, 1600);
+      });
+    }
+    saveBlob(blob, sheetName());
+    btn.textContent = "已下载 ✓";
+    setTimeout(function () { btn.textContent = label; }, 1600);
+  }).catch(function () {
+    btn.textContent = "失败";
+    setTimeout(function () { btn.textContent = label; }, 2000);
+  });
 }
 
 function renderCombo() {
@@ -601,9 +751,21 @@ function renderCombo() {
     + slot("costume", "② 服装", x.c.id, x.cCat + " · " + x.c.zh.slice(0, 4).join(" "), "r23")
     + slot("pose", "③ 姿势", x.pBase, x.p.zh + " · " + x.p.cat, "r34");
 
-  html += '<div class="prompt"><div class="prompt-h"><b>提示词<span class="prompt-hint">已写明「先取图再生成」，并附 curl 取图命令</span></b>'
-    + '<div class="prompt-btns"><button class="primary" id="copyZh">复制中文提示词</button>'
-    + '<button id="copyEn">复制英文提示词</button><button id="copyUrls">复制取图命令</button></div></div>'
+  var modeSeg = '<div class="seg" id="modeSeg">'
+    + '<button data-mode="links"' + (COMBO_MODE === "links" ? ' class="on"' : "") + ">参考图 = 链接</button>"
+    + '<button data-mode="single"' + (COMBO_MODE === "single" ? ' class="on"' : "") + ">参考图 = 一张三联图</button></div>";
+
+  html += '<div class="prompt"><div class="prompt-h"><b>提示词'
+    + '<span class="prompt-hint">' + (COMBO_MODE === "single"
+      ? "单图模式：先「下载三联图」，把这张图随提示词一起发给模型"
+      : "链接模式：已写明「先取图再生成」，并附 curl 取图命令") + "</span></b>"
+    + '<div class="prompt-btns">' + modeSeg
+    + (COMBO_MODE === "links" ? '<button class="primary" id="copyZh">复制中文提示词</button>' : '<button id="copyZh">复制中文提示词</button>')
+    + '<button id="copyEn">复制英文提示词</button>'
+    + (COMBO_MODE === "links"
+      ? '<button id="copyUrls">复制取图命令</button>'
+      : '<button class="primary" id="sheetSave">下载三联图</button><button id="sheetCopy">复制三联图</button>')
+    + "</div></div>"
     + '<textarea id="promptText" readonly></textarea>'
     + '<div class="prompt-links"><span>原图：</span>'
     + '<a href="' + x.urls.face + '" target="_blank" rel="noopener">脸</a>'
@@ -624,9 +786,14 @@ function renderCombo() {
       else openPose(COMBO.pose.key, Object.prototype.hasOwnProperty.call(COMBO.pose.ang, COMBO_ANGLE) ? COMBO_ANGLE : "正面");
     };
   });
+  $("#grid").querySelectorAll("[data-mode]").forEach(function (b) {
+    b.onclick = function () { COMBO_MODE = b.dataset.mode; renderCombo(); };
+  });
   $("#copyZh").onclick = function () { copyBtnText(this, promptZh(), "复制中文提示词"); };
   $("#copyEn").onclick = function () { copyBtnText(this, promptEn(), "复制英文提示词"); };
-  $("#copyUrls").onclick = function () { copyBtnText(this, comboUrls(), "复制取图命令"); };
+  if ($("#copyUrls")) $("#copyUrls").onclick = function () { copyBtnText(this, comboUrls(), "复制取图命令"); };
+  if ($("#sheetSave")) $("#sheetSave").onclick = function () { downloadSheet(this); };
+  if ($("#sheetCopy")) $("#sheetCopy").onclick = function () { copySheet(this); };
 }
 
 /* ---------- 主切换 ---------- */
