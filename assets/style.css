@@ -98,3 +98,27 @@ footer b{color:#3a3a42}
 .empty{color:var(--dim);padding:40px 0;text-align:center}
 .loading{padding:60px 0;text-align:center;color:var(--dim)}
 @media (max-width:760px){.mbox{grid-template-columns:1fr}.mside{max-height:none;border-left:0;border-top:1px solid var(--line)}.mimg img{max-height:52vh}.grid,.grid.pose,.grid.face{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+
+/* ---------- 随机组合 ---------- */
+.combo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;grid-column:1/-1}
+.combo-wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.slot{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.slot-h{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:600}
+.slot-h button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:400}
+.slot-h button:hover{border-color:#c9c9d2}
+.slot .ph{cursor:zoom-in}
+.slot-m{padding:8px 10px;font-size:12px;color:#4a4a52;line-height:1.5}
+.slot-m b{display:block;font-size:12px;color:#1b1b1f}
+.prompt{grid-column:1/-1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.prompt-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.prompt-h b{font-size:13.5px}
+.prompt-hint{font-size:11.5px;color:var(--dim);font-weight:400;margin-left:8px}
+.prompt-btns{display:flex;gap:8px;flex-wrap:wrap}
+.prompt-btns button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:12.5px}
+.prompt-btns button:hover{border-color:#c9c9d2}
+.prompt-btns button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+#promptText{width:100%;min-height:320px;border:1px solid var(--line);border-radius:9px;padding:12px;font:12.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;background:#fafafa;color:#2a2a30;resize:vertical}
+.prompt-links{margin-top:8px;font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
+@media (max-width:760px){.combo-wrap{grid-template-columns:1fr}}
+.slot .ph{height:320px;aspect-ratio:auto}
+.slot .ph img{height:100%;object-fit:cover}

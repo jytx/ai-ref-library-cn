@@ -424,14 +424,196 @@ document.addEventListener("keydown", function (e) {
   else if (e.key === "ArrowDown") { e.preventDefault(); if (curLib === "pose") stepModal(1); }
 });
 
+/* ---------- 随机组合 ---------- */
+var COMBO = { face: null, costume: null, pose: null, poseSeries: -1, costumeCat: -1 };
+var COMBO_ANGLE = "正面";
+var NL = String.fromCharCode(10);
+var EN = {
+  sec: { "脸部特写": "face close-up", "造型": "styled portrait" },
+  hair: { "短发": "short hair", "中发": "medium hair", "中长发": "medium-long hair", "长发": "long hair" },
+  cat: { "春": "spring", "夏": "summer", "秋": "autumn", "冬": "winter", "内衣": "lingerie", "派对": "party", "泳装": "swimwear", "性感": "sexy" }
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function loadAll() {
+  return ["face", "pose", "costume"].reduce(function (p, k) {
+    return p.then(function () { return loadLib(k); });
+  }, Promise.resolve());
+}
+function poolPose() {
+  var arr = data("pose").poses.filter(function (p) { return COMBO.poseSeries < 0 || p.s === COMBO.poseSeries; });
+  return arr.length ? arr : data("pose").poses;
+}
+function poolCostume() {
+  var arr = data("costume").items.filter(function (it) { return COMBO.costumeCat < 0 || it.c === COMBO.costumeCat; });
+  return arr.length ? arr : data("costume").items;
+}
+function comboReroll(which) {
+  if (which === "face") COMBO.face = pick(data("face").items);
+  else if (which === "costume") COMBO.costume = pick(poolCostume());
+  else COMBO.pose = pick(poolPose());
+  renderCombo();
+}
+function comboAll() {
+  COMBO.face = pick(data("face").items);
+  COMBO.costume = pick(poolCostume());
+  COMBO.pose = pick(poolPose());
+  renderCombo();
+}
+
+function comboParts() {
+  var f = COMBO.face, c = COMBO.costume, p = COMBO.pose;
+  var fd = data("face"), cd = data("costume"), pd = data("pose");
+  var fDesc = [fd.sections[f.s].name, f.h >= 0 ? fd.hairs[f.h].name : "", f.sz || ""].filter(Boolean).join(" · ");
+  var pBase = p.ang[COMBO_ANGLE] || p.ang[Object.keys(p.ang)[0]];
+  return {
+    f: f, c: c, p: p,
+    fDesc: fDesc,
+    fDescEn: [EN.sec[fd.sections[f.s].name] || "", f.h >= 0 ? (EN.hair[fd.hairs[f.h].name] || "") : ""].filter(Boolean).join(", "),
+    cCat: cd.cats[c.c].name,
+    cCatEn: EN.cat[cd.cats[c.c].name] || cd.cats[c.c].name,
+    cZh: c.zh.slice(0, 8).join(" · "),
+    cEn: c.kw.slice(0, 10).join(", "),
+    pSer: pd.series[p.s].name,
+    pBase: pBase,
+    urls: { face: LIB.face.remote(f.id), costume: LIB.costume.remote(c.id), pose: LIB.pose.remote(pBase) }
+  };
+}
+
+function promptZh() {
+  var x = comboParts();
+  return [
+    "【角色生成任务】",
+    "",
+    "参考图",
+    "1) 脸：" + x.f.id + "（" + x.fDesc + "）",
+    "   " + x.urls.face,
+    "2) 服装：" + x.c.id + "（" + x.cCat + "：" + x.cZh + "）",
+    "   " + x.urls.costume,
+    "3) 姿势：" + x.p.id + " " + x.p.zh + "（" + x.pSer + "·" + x.p.cat + "，" + COMBO_ANGLE + "机位）",
+    "   " + x.urls.pose,
+    "",
+    "要求",
+    "1. 人物以图1为唯一脸部依据：五官、脸型、骨相、发型保持一致，是同一个人（不要换脸）。",
+    "2. 服装整套换成图2：保留单品、配色、材质与配饰细节。",
+    "3. 姿势按图3摆放：注意机位与透视关系，四肢自然、手指正常、不穿模。",
+    "4. 画面：3:4 竖构图，全身入镜，干净背景，柔和影棚光，写实摄影质感。",
+    "5. 不要出现文字、水印或多余人物。",
+    "",
+    "素材编号：脸 " + x.f.id + " / 服装 " + x.c.id + " / 姿势 " + x.p.id
+  ].join(NL);
+}
+
+function promptEn() {
+  var x = comboParts();
+  return [
+    "TASK: generate one 3:4 portrait from three reference images.",
+    "",
+    "REFERENCES",
+    "1) face: " + x.f.id + " (" + x.fDescEn + ") " + x.urls.face,
+    "2) outfit: " + x.c.id + " (" + x.cCatEn + ": " + x.cEn + ") " + x.urls.costume,
+    "3) pose: " + x.p.id + " " + x.p.zh + " (" + x.pSer + " / " + x.p.cat + ", " + COMBO_ANGLE + " view) " + x.urls.pose,
+    "",
+    "REQUIREMENTS",
+    "1. Use image 1 as the ONLY face reference: keep the same identity, facial features, bone structure and hairstyle.",
+    "2. Replace the outfit with the full look in image 2: keep items, colours, fabrics and accessories.",
+    "3. Match the body pose in image 3: correct camera angle and perspective, natural limbs, correct fingers, no interpenetration.",
+    "4. Output: 3:4 vertical, full body in frame, clean background, soft studio light, photorealistic.",
+    "5. No text, no watermark, no extra people.",
+    "",
+    "IDs: face " + x.f.id + " / outfit " + x.c.id + " / pose " + x.p.id
+  ].join(NL);
+}
+
+function comboUrls() {
+  var x = comboParts();
+  return ["脸 " + x.urls.face, "服装 " + x.urls.costume, "姿势 " + x.urls.pose].join(NL);
+}
+
+function copyBtnText(btn, text, label) {
+  var done = function () {
+    btn.textContent = "已复制 ✓";
+    setTimeout(function () { btn.textContent = label; }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+  } else { fallbackCopy(text, done); }
+}
+
+function renderCombo() {
+  var fd = data("face"), cd = data("costume"), pd = data("pose");
+  var poseOpts = '<option value="-1">全部</option>' + pd.series.map(function (s, i) {
+    return '<option value="' + i + '"' + (COMBO.poseSeries === i ? " selected" : "") + ">" + esc(s.name) + "</option>";
+  }).join("");
+  var costOpts = '<option value="-1">全部</option>' + cd.cats.map(function (c, i) {
+    return '<option value="' + i + '"' + (COMBO.costumeCat === i ? " selected" : "") + ">" + esc(c.name) + "</option>";
+  }).join("");
+  $("#toolbar").innerHTML = '<div class="row">'
+    + '<span class="prompt-hint" style="margin:0 4px 0 0">姿势范围</span><select id="poseRange">' + poseOpts + "</select>"
+    + '<span class="prompt-hint" style="margin:0 4px 0 8px">服装范围</span><select id="costRange">' + costOpts + "</select>"
+    + '<button id="rerollAll" style="border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px">🎲 全部换一组</button>'
+    + '<span id="count"></span></div>';
+  $("#poseRange").onchange = function (e) { COMBO.poseSeries = +e.target.value; comboReroll("pose"); };
+  $("#costRange").onchange = function (e) { COMBO.costumeCat = +e.target.value; comboReroll("costume"); };
+  $("#rerollAll").onclick = comboAll;
+  $("#count").textContent = "脸 × 服装 × 姿势";
+
+  var x = comboParts();
+  function slot(lib, title, base, desc, ratio) {
+    return '<div class="slot"><div class="slot-h"><span>' + title + '</span><button data-reroll="' + lib + '">🔄 换一个</button></div>'
+      + '<div class="ph ' + ratio + '" data-open="' + lib + '"><img loading="lazy" src="' + thumb(lib, base) + '" alt="">'
+      + '<div class="badge">' + base + "</div></div>"
+      + '<div class="slot-m"><b>' + esc(desc) + "</b></div></div>";
+  }
+  var html = slot("face", "① 脸", x.f.id, x.fDesc, "r45")
+    + slot("costume", "② 服装", x.c.id, x.cCat + " · " + x.c.zh.slice(0, 4).join(" "), "r23")
+    + slot("pose", "③ 姿势", x.pBase, x.p.zh + " · " + x.p.cat, "r34");
+
+  html += '<div class="prompt"><div class="prompt-h"><b>提示词<span class="prompt-hint">三张参考图的源站链接已写在文末，可直接交给其他 Agent</span></b>'
+    + '<div class="prompt-btns"><button class="primary" id="copyZh">复制中文提示词</button>'
+    + '<button id="copyEn">复制英文提示词</button><button id="copyUrls">只复制三张图链接</button></div></div>'
+    + '<textarea id="promptText" readonly></textarea>'
+    + '<div class="prompt-links"><span>原图：</span>'
+    + '<a href="' + x.urls.face + '" target="_blank" rel="noopener">脸</a>'
+    + '<a href="' + x.urls.costume + '" target="_blank" rel="noopener">服装</a>'
+    + '<a href="' + x.urls.pose + '" target="_blank" rel="noopener">姿势</a></div></div>';
+
+  $("#grid").className = "combo";
+  $("#grid").innerHTML = html;
+  $("#promptText").value = promptZh();
+
+  $("#grid").querySelectorAll("[data-reroll]").forEach(function (b) {
+    b.onclick = function () { comboReroll(b.dataset.reroll); };
+  });
+  $("#grid").querySelectorAll("[data-open]").forEach(function (el) {
+    el.onclick = function () {
+      if (el.dataset.open === "face") openFace(COMBO.face.id);
+      else if (el.dataset.open === "costume") openCostume(COMBO.costume.id);
+      else openPose(COMBO.pose.key, Object.prototype.hasOwnProperty.call(COMBO.pose.ang, COMBO_ANGLE) ? COMBO_ANGLE : "正面");
+    };
+  });
+  $("#copyZh").onclick = function () { copyBtnText(this, promptZh(), "复制中文提示词"); };
+  $("#copyEn").onclick = function () { copyBtnText(this, promptEn(), "复制英文提示词"); };
+  $("#copyUrls").onclick = function () { copyBtnText(this, comboUrls(), "只复制三张图链接"); };
+}
+
 /* ---------- 主切换 ---------- */
 function switchLib(lib) {
   S.lib = lib; S.q = "";
-  var d = null;
-  try { d = window.location.hash; } catch (e) { }
   document.querySelectorAll(".nav button").forEach(function (b) {
     b.classList.toggle("on", b.dataset.lib === lib);
   });
+  if (lib === "combo") {
+    $("#toolbar").innerHTML = '<div class="loading">正在载入三套素材（约 18 MB，首次需要几秒）…</div>';
+    $("#grid").className = "grid";
+    $("#grid").innerHTML = "";
+    loadAll().then(function () {
+      if (!COMBO.face) comboAll(); else renderCombo();
+    }).catch(function (err) {
+      $("#toolbar").innerHTML = '<div class="empty">' + esc(err.message) + "</div>";
+    });
+    return;
+  }
   loadLib(lib).then(function () {
     render();
   }).catch(function (err) {
@@ -444,6 +626,7 @@ document.querySelectorAll(".nav button").forEach(function (b) {
   b.onclick = function () { switchLib(b.dataset.lib); };
 });
 $("#rnd").onclick = function () {
+  if (S.lib === "combo") { if (COMBO.face) comboAll(); return; }
   if (!cache[S.lib]) return;
   var list;
   if (S.lib === "face") list = data("face").items.filter(faceMatch);
