@@ -408,11 +408,18 @@ $("#mcopy").onclick = function () {
     navigator.clipboard.writeText(txt).then(done).catch(function () { fallbackCopy(txt, done); });
   } else { fallbackCopy(txt, done); }
 };
-function fallbackCopy(txt, done) {
+function fallbackCopy(txt, done, fail) {
   var t = document.createElement("textarea");
-  t.value = txt; document.body.appendChild(t); t.select();
-  try { document.execCommand("copy"); done(); } catch (e) { $("#mcopy").textContent = "复制失败，请手动选择"; }
+  t.value = txt;
+  t.style.position = "fixed"; t.style.top = "-1000px"; t.style.opacity = "0";
+  document.body.appendChild(t);
+  t.focus(); t.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
   t.remove();
+  if (ok) { done(); return; }
+  if (fail) { fail(); return; }
+  if ($("#mcopy")) $("#mcopy").textContent = "复制失败，请手动选择";
 }
 
 document.addEventListener("keydown", function (e) {
@@ -611,6 +618,22 @@ function comboUrls() {
     "服装 " + x.urls.costume,
     "姿势 " + x.urls.pose
   ].join(NL);
+}
+
+function copyBtnText(btn, text, label) {
+  var done = function () {
+    btn.textContent = "已复制 ✓";
+    setTimeout(function () { btn.textContent = label; }, 1600);
+  };
+  var fail = function () {
+    btn.textContent = "复制失败，请手动全选";
+    setTimeout(function () { btn.textContent = label; }, 2400);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done, fail); });
+  } else {
+    fallbackCopy(text, done, fail);
+  }
 }
 
 function loadImage(url, cors) {
