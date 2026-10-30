@@ -48,7 +48,7 @@
 
 [https://pan.quark.cn/s/6b1004add615](https://pan.quark.cn/s/6b1004add615)
 
-[https://pan.baidu.com/s/1rY8E88d19xabnoBGhex4zg](https://pan.baidu.com/s/1rY8E88d19xabnoBGhex4zg)
+[https://pan.baidu.com/s/1rY8E88d19xabnoBGhex4zg?pwd=vsf6](https://pan.baidu.com/s/1rY8E88d19xabnoBGhex4zg?pwd=vsf6)
 
 ## 授权（请务必看清）
 
