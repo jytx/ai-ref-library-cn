@@ -485,6 +485,12 @@ function promptZh() {
   return [
     "【角色生成任务】",
     "",
+    "工作方式（重要，先看这一段）",
+    "1. 下面「参考图」里的三个链接就是三张参考图，请先用你能用的手段（网页抓取 / 下载 / 读图工具）把图片真正取到本地或上下文里。",
+    "2. 不要跳过取图，也不要只看链接文字、凭描述直接生成。",
+    "3. 如果某一链接打不开：明确说明缺的是哪一张（脸 / 服装 / 姿势），用剩下的图继续，并在交付时注明缺了哪张。",
+    "4. 三张都拿到之后，再按最后的「要求」执行。",
+    "",
     "参考图",
     "1) 脸：" + x.f.id + "（" + x.fDesc + "）",
     "   " + x.urls.face,
@@ -492,6 +498,11 @@ function promptZh() {
     "   " + x.urls.costume,
     "3) 姿势：" + x.p.id + " " + x.p.zh + "（" + x.pSer + "·" + x.p.cat + "，" + COMBO_ANGLE + "机位）",
     "   " + x.urls.pose,
+    "",
+    "取图命令（有 shell 权限的直接跑）",
+    "curl -L -o ref_face.png \"" + x.urls.face + "\"",
+    "curl -L -o ref_outfit.png \"" + x.urls.costume + "\"",
+    "curl -L -o ref_pose.png \"" + x.urls.pose + "\"",
     "",
     "要求",
     "1. 人物以图1为唯一脸部依据：五官、脸型、骨相、发型保持一致，是同一个人（不要换脸）。",
@@ -509,10 +520,21 @@ function promptEn() {
   return [
     "TASK: generate one 3:4 portrait from three reference images.",
     "",
+    "HOW TO WORK (read this first)",
+    "1. The three links below ARE the three reference images. Fetch them first with whatever you have (web fetch / download / image input) so the actual pixels are in your context.",
+    "2. Do not skip the fetch step, and do not just read the link text and generate from description alone.",
+    "3. If a link fails: say which one is missing (face / outfit / pose), continue with the rest, and note the missing reference in your delivery.",
+    "4. Only after all three images are in hand, follow REQUIREMENTS.",
+    "",
     "REFERENCES",
     "1) face: " + x.f.id + " (" + x.fDescEn + ") " + x.urls.face,
     "2) outfit: " + x.c.id + " (" + x.cCatEn + ": " + x.cEn + ") " + x.urls.costume,
     "3) pose: " + x.p.id + " " + x.p.zh + " (" + x.pSer + " / " + x.p.cat + ", " + COMBO_ANGLE + " view) " + x.urls.pose,
+    "",
+    "SHELL (run these if you have a shell)",
+    "curl -L -o ref_face.png \"" + x.urls.face + "\"",
+    "curl -L -o ref_outfit.png \"" + x.urls.costume + "\"",
+    "curl -L -o ref_pose.png \"" + x.urls.pose + "\"",
     "",
     "REQUIREMENTS",
     "1. Use image 1 as the ONLY face reference: keep the same identity, facial features, bone structure and hairstyle.",
@@ -527,7 +549,17 @@ function promptEn() {
 
 function comboUrls() {
   var x = comboParts();
-  return ["脸 " + x.urls.face, "服装 " + x.urls.costume, "姿势 " + x.urls.pose].join(NL);
+  return [
+    "取三张参考图（curl）：",
+    "curl -L -o ref_face.png \"" + x.urls.face + "\"",
+    "curl -L -o ref_outfit.png \"" + x.urls.costume + "\"",
+    "curl -L -o ref_pose.png \"" + x.urls.pose + "\"",
+    "",
+    "链接：",
+    "脸 " + x.urls.face,
+    "服装 " + x.urls.costume,
+    "姿势 " + x.urls.pose
+  ].join(NL);
 }
 
 function copyBtnText(btn, text, label) {
@@ -569,9 +601,9 @@ function renderCombo() {
     + slot("costume", "② 服装", x.c.id, x.cCat + " · " + x.c.zh.slice(0, 4).join(" "), "r23")
     + slot("pose", "③ 姿势", x.pBase, x.p.zh + " · " + x.p.cat, "r34");
 
-  html += '<div class="prompt"><div class="prompt-h"><b>提示词<span class="prompt-hint">三张参考图的源站链接已写在文末，可直接交给其他 Agent</span></b>'
+  html += '<div class="prompt"><div class="prompt-h"><b>提示词<span class="prompt-hint">已写明「先取图再生成」，并附 curl 取图命令</span></b>'
     + '<div class="prompt-btns"><button class="primary" id="copyZh">复制中文提示词</button>'
-    + '<button id="copyEn">复制英文提示词</button><button id="copyUrls">只复制三张图链接</button></div></div>'
+    + '<button id="copyEn">复制英文提示词</button><button id="copyUrls">复制取图命令</button></div></div>'
     + '<textarea id="promptText" readonly></textarea>'
     + '<div class="prompt-links"><span>原图：</span>'
     + '<a href="' + x.urls.face + '" target="_blank" rel="noopener">脸</a>'
@@ -594,7 +626,7 @@ function renderCombo() {
   });
   $("#copyZh").onclick = function () { copyBtnText(this, promptZh(), "复制中文提示词"); };
   $("#copyEn").onclick = function () { copyBtnText(this, promptEn(), "复制英文提示词"); };
-  $("#copyUrls").onclick = function () { copyBtnText(this, comboUrls(), "只复制三张图链接"); };
+  $("#copyUrls").onclick = function () { copyBtnText(this, comboUrls(), "复制取图命令"); };
 }
 
 /* ---------- 主切换 ---------- */
