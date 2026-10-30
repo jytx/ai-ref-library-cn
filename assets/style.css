@@ -122,3 +122,6 @@ footer b{color:#3a3a42}
 @media (max-width:760px){.combo-wrap{grid-template-columns:1fr}}
 .slot .ph{height:320px;aspect-ratio:auto}
 .slot .ph img{height:100%;object-fit:cover}
+
+.rndbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;color:#3a3a42;margin-left:8px}
+.rndbtn:hover{border-color:#c9c9d2;color:#111}

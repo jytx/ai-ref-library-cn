@@ -147,7 +147,7 @@ function toolbarFace() {
   });
   $("#toolbar").innerHTML = '<div class="tabs">' + all + "</div>"
     + '<div class="row"><input id="q" type="search" placeholder="搜索：编号 / 造型（蝴蝶剪、狼尾、空气刘海）" autocomplete="off">'
-    + '<div class="seg" id="hairseg">' + hair + '</div><span id="count"></span></div>';
+    + '<div class="seg" id="hairseg">' + hair + '</div><button class="rndbtn" id="rnd2">🎲 随机一张</button><span id="count"></span></div>';
   $("#toolbar").querySelectorAll("[data-sec]").forEach(function (b) {
     b.onclick = function () { S.face.sec = +b.dataset.sec; S.q = ""; render(); };
   });
@@ -177,7 +177,7 @@ function toolbarPose() {
     + '<div class="row"><input id="q" type="search" placeholder="搜索：中文名 / 日文名 / 编号（如 比心、P023、站立）" autocomplete="off">'
     + sel + '<div class="seg" id="angseg">' + angHTML + "</div>"
     + '<div class="seg" id="viewseg"><button data-view="pose"' + (S.pose.view === "pose" ? ' class="on"' : '') + '>按姿势</button><button data-view="one"' + (S.pose.view === "one" ? ' class="on"' : '') + '>按单张</button></div>' 
-    + '<span id="count"></span></div>';
+    + '<button class="rndbtn" id="rnd2">🎲 随机一张</button><span id="count"></span></div>';
   $("#toolbar").querySelectorAll("[data-series]").forEach(function (b) {
     b.onclick = function () { S.pose.series = +b.dataset.series; S.pose.cat = ""; render(); };
   });
@@ -199,7 +199,7 @@ function toolbarCostume() {
     all += '<button class="tab' + (S.costume.cat === i ? " on" : "") + '" data-cat="' + i + '">' + esc(c.name) + "<b>" + c.n + "</b></button>";
   });
   $("#toolbar").innerHTML = '<div class="tabs">' + all + "</div>"
-    + '<div class="row"><input id="q" type="search" placeholder="搜索：编号 / 中文（牛仔、蕾丝）/ 英文（denim、lace）" autocomplete="off"><span id="count"></span></div>';
+    + '<div class="row"><input id="q" type="search" placeholder="搜索：编号 / 中文（牛仔、蕾丝）/ 英文（denim、lace）" autocomplete="off"><button class="rndbtn" id="rnd2">🎲 随机一张</button><span id="count"></span></div>';
   $("#toolbar").querySelectorAll("[data-cat]").forEach(function (b) {
     b.onclick = function () { S.costume.cat = +b.dataset.cat; render(); };
   });
@@ -657,7 +657,7 @@ function switchLib(lib) {
 document.querySelectorAll(".nav button").forEach(function (b) {
   b.onclick = function () { switchLib(b.dataset.lib); };
 });
-$("#rnd").onclick = function () {
+function randomOpen() {
   if (S.lib === "combo") { if (COMBO.face) comboAll(); return; }
   if (!cache[S.lib]) return;
   var list;
@@ -669,7 +669,10 @@ $("#rnd").onclick = function () {
   if (S.lib === "face") openFace(x.id);
   else if (S.lib === "pose") openPose(x.key, "正面");
   else openCostume(x.id);
-};
+}
+document.addEventListener("click", function (e) {
+  if (e.target && e.target.id === "rnd2") randomOpen();
+});
 
 switchLib("face");
 })();
