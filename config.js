@@ -40,7 +40,8 @@ window.LOCAL_ORIGINALS = {
  */
 window.ANALYTICS = {
   providers: [
+    { provider: "ga4", id: "G-0C99160522" }
     // { provider: "clarity", id: "你的 Clarity 项目 ID" },
-    // { provider: "ga4", id: "G-XXXXXXXXXX" }
+    // { provider: "baidu", id: "你的百度统计 id" }
   ]
 };
