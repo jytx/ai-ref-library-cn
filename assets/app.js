@@ -918,5 +918,27 @@ document.addEventListener("click", function (e) {
   });
 })();
 
+/* ---------- 首次访问的赞赏提示：9s 后自动展开一次，8s 后自动收起 ---------- */
+(function () {
+  try {
+    var grat = document.getElementById("gratHover");
+    var gbtn = document.getElementById("gratTrigger");
+    if (!grat || !gbtn) return;
+    if (window.localStorage.getItem("gratNudge")) return;
+    window.localStorage.setItem("gratNudge", "1");
+    setTimeout(function () {
+      if (grat.matches(":hover") || grat.classList.contains("open")) return;
+      grat.classList.add("open");
+      gbtn.setAttribute("aria-expanded", "true");
+      setTimeout(function () {
+        if (!grat.matches(":hover")) {
+          grat.classList.remove("open");
+          gbtn.setAttribute("aria-expanded", "false");
+        }
+      }, 8000);
+    }, 9000);
+  } catch (e) { }
+})();
+
 switchLib("combo");
 })();
