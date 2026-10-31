@@ -14,3 +14,21 @@ window.LOCAL_ORIGINALS = {
   pose: "../姿势库中文版/originals/",
   costume: "../服装库中文版/originals/"
 };
+
+/**
+ * 埋点配置（可选，填了才会上报）。
+ *
+ * provider:
+ *   "none"        → 只写本地 window.__trackLog，不发任何请求（默认）
+ *   "ga4"         → Google Analytics 4，id 形如 G-XXXXXXXXXX
+ *   "baidu"       → 百度统计，id 是 hm.js? 后面那串
+ *   "umami"       → Umami Cloud，id 是 website-id
+ *   "cloudflare"  → Cloudflare Web Analytics，id 是 beacon token（只统计 PV，无自定义事件）
+ *
+ * 调试：控制台执行 window.__trackDebug = true 后刷新，可看到每条事件；
+ *      window.__trackLog 里始终保留最近 200 条。
+ */
+window.ANALYTICS = {
+  provider: "none",
+  id: ""
+};

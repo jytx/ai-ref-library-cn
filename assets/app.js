@@ -3,6 +3,14 @@
 
 var $ = function (s) { return document.querySelector(s); };
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+function trackEvent(name, params) { try { if (window.track) window.track(name, params); } catch (e) { } }
+var searchTimer = null;
+function trackSearch() {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(function () {
+    if (S.q) trackEvent("search", { lib: S.lib, q: S.q.slice(0, 40) });
+  }, 800);
+}
 
 var LIB = {
   face: {
@@ -149,13 +157,13 @@ function toolbarFace() {
     + '<div class="row"><input id="q" type="search" placeholder="搜索：编号 / 造型（蝴蝶剪、狼尾、空气刘海）" autocomplete="off">'
     + '<div class="seg" id="hairseg">' + hair + '</div><button class="rndbtn" id="rnd2">🎲 随机一张</button><span id="count"></span></div>';
   $("#toolbar").querySelectorAll("[data-sec]").forEach(function (b) {
-    b.onclick = function () { S.face.sec = +b.dataset.sec; S.q = ""; render(); };
+    b.onclick = function () { S.face.sec = +b.dataset.sec; S.q = ""; trackEvent("filter", { lib: "face", type: "section", value: b.dataset.sec }); render(); };
   });
   $("#toolbar").querySelectorAll("[data-hair]").forEach(function (b) {
-    b.onclick = function () { S.face.hair = +b.dataset.hair; render(); };
+    b.onclick = function () { S.face.hair = +b.dataset.hair; trackEvent("filter", { lib: "face", type: "hair", value: b.dataset.hair }); render(); };
   });
   $("#q").value = S.q;
-  $("#q").oninput = function (e) { S.q = e.target.value.trim(); render(true); };
+  $("#q").oninput = function (e) { S.q = e.target.value.trim(); render(true); trackSearch(); };
 }
 
 function toolbarPose() {
@@ -179,17 +187,17 @@ function toolbarPose() {
     + '<div class="seg" id="viewseg"><button data-view="pose"' + (S.pose.view === "pose" ? ' class="on"' : '') + '>按姿势</button><button data-view="one"' + (S.pose.view === "one" ? ' class="on"' : '') + '>按单张</button></div>' 
     + '<button class="rndbtn" id="rnd2">🎲 随机一张</button><span id="count"></span></div>';
   $("#toolbar").querySelectorAll("[data-series]").forEach(function (b) {
-    b.onclick = function () { S.pose.series = +b.dataset.series; S.pose.cat = ""; render(); };
+    b.onclick = function () { S.pose.series = +b.dataset.series; S.pose.cat = ""; trackEvent("filter", { lib: "pose", type: "series", value: b.dataset.series }); render(); };
   });
   $("#toolbar").querySelectorAll("[data-ang]").forEach(function (b) {
-    b.onclick = function () { S.pose.ang = b.dataset.ang; render(); };
+    b.onclick = function () { S.pose.ang = b.dataset.ang; trackEvent("filter", { lib: "pose", type: "angle", value: b.dataset.ang || "all" }); render(); };
   });
   $("#toolbar").querySelectorAll("[data-view]").forEach(function (b) {
-    b.onclick = function () { S.pose.view = b.dataset.view; render(); };
+    b.onclick = function () { S.pose.view = b.dataset.view; trackEvent("filter", { lib: "pose", type: "view", value: b.dataset.view }); render(); };
   });
-  $("#cat").onchange = function (e) { S.pose.cat = e.target.value; render(); };
+  $("#cat").onchange = function (e) { S.pose.cat = e.target.value; trackEvent("filter", { lib: "pose", type: "cat", value: e.target.value || "all" }); render(); };
   $("#q").value = S.q;
-  $("#q").oninput = function (e) { S.q = e.target.value.trim(); render(true); };
+  $("#q").oninput = function (e) { S.q = e.target.value.trim(); render(true); trackSearch(); };
 }
 
 function toolbarCostume() {
@@ -201,10 +209,10 @@ function toolbarCostume() {
   $("#toolbar").innerHTML = '<div class="tabs">' + all + "</div>"
     + '<div class="row"><input id="q" type="search" placeholder="搜索：编号 / 中文（牛仔、蕾丝）/ 英文（denim、lace）" autocomplete="off"><button class="rndbtn" id="rnd2">🎲 随机一张</button><span id="count"></span></div>';
   $("#toolbar").querySelectorAll("[data-cat]").forEach(function (b) {
-    b.onclick = function () { S.costume.cat = +b.dataset.cat; render(); };
+    b.onclick = function () { S.costume.cat = +b.dataset.cat; trackEvent("filter", { lib: "costume", type: "cat", value: b.dataset.cat }); render(); };
   });
   $("#q").value = S.q;
-  $("#q").oninput = function (e) { S.q = e.target.value.trim(); render(true); };
+  $("#q").oninput = function (e) { S.q = e.target.value.trim(); render(true); trackSearch(); };
 }
 
 /* ---------- 渲染 ---------- */
@@ -303,6 +311,7 @@ function setDownload(link, name) {
 function openFace(id) {
   curLib = "face"; cur = data("face").items.filter(function (x) { return x.id === id; })[0];
   if (!cur) return;
+  trackEvent("item_open", { lib: "face", id: cur.id });
   var d = data("face");
   resolveOriginal("face", cur.id, cur.id + ".png");
   $("#mtitle").textContent = d.sections[cur.s].name + " · " + cur.id;
@@ -321,6 +330,7 @@ function openPose(key, angle) {
   curLib = "pose";
   cur = data("pose").poses.filter(function (x) { return x.key === key; })[0];
   if (!cur) return;
+  trackEvent("item_open", { lib: "pose", id: cur.id, series: data("pose").series[cur.s].name });
   curAngle = cur.ang[angle] ? angle : Object.keys(cur.ang)[0];
   var d = data("pose");
   var base = cur.ang[curAngle];
@@ -343,6 +353,7 @@ function openPose(key, angle) {
 function openCostume(id) {
   curLib = "costume"; cur = data("costume").items.filter(function (x) { return x.id === id; })[0];
   if (!cur) return;
+  trackEvent("item_open", { lib: "costume", id: cur.id });
   var d = data("costume");
   resolveOriginal("costume", cur.id, cur.id + ".png");
   $("#mtitle").textContent = cur.id + " · " + d.cats[cur.c].name;
@@ -391,6 +402,7 @@ $("#mclose").onclick = hideModal;
 $("#modal").onclick = function (e) { if (e.target.id === "modal") hideModal(); };
 
 $("#mcopy").onclick = function () {
+  trackEvent("copy", { label: "modal_copy", lib: curLib || "" });
   var txt = "";
   if (curLib === "face") {
     var d = data("face");
@@ -459,12 +471,20 @@ function comboReroll(which) {
   if (which === "face") COMBO.face = pick(data("face").items);
   else if (which === "costume") COMBO.costume = pick(poolCostume());
   else COMBO.pose = pick(poolPose());
+  trackEvent("combo_roll", { trigger: which, face: COMBO.face.id, costume: COMBO.costume.id, pose: COMBO.pose.id });
   renderCombo();
 }
 function comboAll() {
   COMBO.face = pick(data("face").items);
   COMBO.costume = pick(poolCostume());
   COMBO.pose = pick(poolPose());
+  trackEvent("combo_roll", {
+    trigger: "all",
+    face: COMBO.face.id,
+    costume: COMBO.costume.id,
+    pose: COMBO.pose.id,
+    pose_series: data("pose").series[COMBO.pose.s].name
+  });
   renderCombo();
 }
 
@@ -621,6 +641,7 @@ function comboUrls() {
 }
 
 function copyBtnText(btn, text, label) {
+  trackEvent("copy", { label: label });
   var done = function () {
     btn.textContent = "已复制 ✓";
     setTimeout(function () { btn.textContent = label; }, 1600);
@@ -716,6 +737,7 @@ function sheetName() {
 function downloadSheet(btn) {
   var label = btn.textContent;
   btn.textContent = "生成中…";
+  trackEvent("combo_sheet", { action: "download" });
   makeSheet().then(function (blob) {
     saveBlob(blob, sheetName());
     btn.textContent = "已下载 ✓";
@@ -729,6 +751,7 @@ function downloadSheet(btn) {
 function copySheet(btn) {
   var label = btn.textContent;
   btn.textContent = "生成中…";
+  trackEvent("combo_sheet", { action: "copy" });
   makeSheet().then(function (blob) {
     if (navigator.clipboard && window.ClipboardItem) {
       return navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]).then(function () {
@@ -810,7 +833,7 @@ function renderCombo() {
     };
   });
   $("#grid").querySelectorAll("[data-mode]").forEach(function (b) {
-    b.onclick = function () { COMBO_MODE = b.dataset.mode; renderCombo(); };
+    b.onclick = function () { COMBO_MODE = b.dataset.mode; trackEvent("combo_mode", { mode: b.dataset.mode }); renderCombo(); };
   });
   $("#copyZh").onclick = function () { copyBtnText(this, promptZh(), "复制中文提示词"); };
   $("#copyEn").onclick = function () { copyBtnText(this, promptEn(), "复制英文提示词"); };
@@ -822,6 +845,7 @@ function renderCombo() {
 /* ---------- 主切换 ---------- */
 function switchLib(lib) {
   S.lib = lib; S.q = "";
+  trackEvent("lib_view", { lib: lib });
   document.querySelectorAll(".nav button").forEach(function (b) {
     b.classList.toggle("on", b.dataset.lib === lib);
   });
@@ -862,6 +886,9 @@ function randomOpen() {
 }
 document.addEventListener("click", function (e) {
   if (e.target && e.target.id === "rnd2") randomOpen();
+  if (e.target && e.target.id === "mdl") {
+    trackEvent("original_download", { lib: curLib || S.lib, id: cur ? (cur.id || cur.key) : "" });
+  }
 });
 
 switchLib("face");

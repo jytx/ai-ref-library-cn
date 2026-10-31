@@ -20,6 +20,7 @@
   - [两种参考图形式](#两种参考图形式)：链接版 vs 单张三联图
 - [打开方式](#打开方式)：双击 index.html 即可
 - [原图怎么来](#原图怎么来)：本地原图 / 源站 / 网盘备份
+- [埋点](#埋点)：默认关闭，填一个 ID 即可接入
 - [授权](#授权)：三个库的许可差异
 - [免责](#免责)
 
@@ -80,6 +81,42 @@
 [https://pan.quark.cn/s/6b1004add615](https://pan.quark.cn/s/6b1004add615)
 
 [https://pan.baidu.com/s/1rY8E88d19xabnoBGhex4zg?pwd=vsf6](https://pan.baidu.com/s/1rY8E88d19xabnoBGhex4zg?pwd=vsf6)
+
+## 埋点
+
+默认**完全关闭**：不加载任何第三方脚本、不发任何请求，事件只写进浏览器的 `window.__trackLog`（保留最近 200 条）。
+
+要启用，在 `config.js` 里填一行：
+
+```js
+window.ANALYTICS = { provider: "ga4", id: "G-XXXXXXXXXX" };
+```
+
+| provider | 填什么 | 说明 |
+| --- | --- | --- |
+| `none` | — | 默认，只本地打日志 |
+| `ga4` | `G-XXXXXXXXXX` | Google Analytics 4，会写 cookie，国内访问偏慢 |
+| `baidu` | `hm.js?` 后面那串 | 百度统计，国内速度最好 |
+| `umami` | website-id | Umami Cloud，无 cookie，需自建或订阅 |
+| `cloudflare` | beacon token | Cloudflare Web Analytics，只统计 PV，无自定义事件 |
+
+### 上报的事件
+
+| 事件 | 触发点 | 携带参数 |
+| --- | --- | --- |
+| `lib_view` | 切换脸库 / 姿势库 / 服装库 / 组合 | `lib` |
+| `search` | 搜索框输入（防抖 800ms） | `lib`, `q`（截断 40 字） |
+| `filter` | 分类 / 发长 / 机位 / 视图筛选 | `lib`, `type`, `value` |
+| `item_open` | 打开任意条目大图 | `lib`, `id` |
+| `original_download` | 点「下载原图」 | `lib`, `id` |
+| `copy` | 任意复制按钮 | `label` |
+| `combo_roll` | 随机组合（全部换 / 单项换） | `trigger`, `face`, `costume`, `pose` |
+| `combo_mode` | 切换「链接 / 三联图」模式 | `mode` |
+| `combo_sheet` | 下载或复制三联图 | `action` |
+
+调试：控制台执行 `window.__trackDebug = true` 刷新，每条事件都会打印；`window.__trackLog` 随时可查。
+
+> 隐私提醒：`search` 会上报搜索词。如果不想收集，可以把 app.js 里 `trackEvent("search", ...)` 的 `q` 参数删掉。
 
 ## 授权
 
