@@ -180,8 +180,4 @@ footer .links{margin:0 0 16px}
   transition:transform .15s,box-shadow .15s}
 .grat-trigger:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(230,161,44,.5), inset 0 1px 0 rgba(255,255,255,.7)}
 .grat-trigger:active{transform:translateY(0)}
-.grat-trigger::after{content:"";position:absolute;inset:0;border-radius:999px;pointer-events:none;
-  animation:gratPulse 2.2s ease-out 4}
-@keyframes gratPulse{0%{box-shadow:0 0 0 0 rgba(240,180,60,.55)}70%{box-shadow:0 0 0 14px rgba(240,180,60,0)}100%{box-shadow:0 0 0 0 rgba(240,180,60,0)}}
 .grat-panel{border-color:#f0d7a3;box-shadow:0 18px 44px rgba(120,80,0,.18)}
-@media (prefers-reduced-motion:reduce){.grat-trigger::after{animation:none}}
