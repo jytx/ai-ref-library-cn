@@ -135,3 +135,7 @@ footer b{color:#3a3a42}
 .tip-txt p{margin:5px 0 0;font-size:12.5px;color:#3a3a42}
 .tip-txt .tip-note{color:var(--dim);font-size:11.5px}
 @media (max-width:560px){.tip{flex-direction:row;align-items:center;gap:12px}.tip-qr img{width:96px;height:96px}}
+
+/* ---------- 页脚简介 / 链接 ---------- */
+.foot-intro{margin:0 0 12px;font-size:12.5px;color:#4a4a52;line-height:1.7;max-width:900px}
+footer .links{margin:0 0 16px}
