@@ -891,24 +891,30 @@ document.addEventListener("click", function (e) {
   }
 });
 
-/* ---------- 使用说明：hover 展开，点击/触摸兜底 ---------- */
+/* ---------- 悬浮面板（使用说明 / 赞赏）：hover 展开，点击兜底 ---------- */
 (function () {
-  var wrap = document.getElementById("tipsHover");
-  var btn = document.getElementById("tipsTrigger");
-  if (!wrap || !btn) return;
-  function setOpen(v) {
-    wrap.classList.toggle("open", v);
-    btn.setAttribute("aria-expanded", v ? "true" : "false");
-  }
-  btn.addEventListener("click", function (e) {
-    e.stopPropagation();
-    setOpen(!wrap.classList.contains("open"));
+  var pairs = [["tipsHover", "tipsTrigger"], ["gratHover", "gratTrigger"]];
+  var wraps = [];
+  pairs.forEach(function (pair) {
+    var wrap = document.getElementById(pair[0]);
+    var btn = document.getElementById(pair[1]);
+    if (!wrap || !btn) return;
+    wraps.push(wrap);
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = !wrap.classList.contains("open");
+      wraps.forEach(function (w) { w.classList.remove("open"); });
+      wrap.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
   });
   document.addEventListener("click", function (e) {
-    if (!wrap.contains(e.target)) setOpen(false);
+    if (!wraps.some(function (w) { return w.contains(e.target); })) {
+      wraps.forEach(function (w) { w.classList.remove("open"); });
+    }
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") setOpen(false);
+    if (e.key === "Escape") wraps.forEach(function (w) { w.classList.remove("open"); });
   });
 })();
 
