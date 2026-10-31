@@ -86,10 +86,15 @@
 
 默认**完全关闭**：不加载任何第三方脚本、不发任何请求，事件只写进浏览器的 `window.__trackLog`（保留最近 200 条）。
 
-要启用，在 `config.js` 里填一行：
+要启用，在 `config.js` 里填项目 ID，**可以同时接多家**：
 
 ```js
-window.ANALYTICS = { provider: "ga4", id: "G-XXXXXXXXXX" };
+window.ANALYTICS = {
+  providers: [
+    { provider: "clarity", id: "你的 Clarity 项目 ID" },
+    { provider: "ga4", id: "G-XXXXXXXXXX" }
+  ]
+};
 ```
 
 | provider | 填什么 | 说明 |
@@ -98,7 +103,10 @@ window.ANALYTICS = { provider: "ga4", id: "G-XXXXXXXXXX" };
 | `ga4` | `G-XXXXXXXXXX` | Google Analytics 4，会写 cookie，国内访问偏慢 |
 | `baidu` | `hm.js?` 后面那串 | 百度统计，国内速度最好 |
 | `umami` | website-id | Umami Cloud，无 cookie，需自建或订阅 |
+| `clarity` | 项目 ID | Microsoft Clarity，**会话录制 + 热图 + 点击统计**，免费无限量，国内可访问 |
 | `cloudflare` | beacon token | Cloudflare Web Analytics，只统计 PV，无自定义事件 |
+
+Clarity 的具体接入：在 <https://clarity.microsoft.com> 新建项目、填站点域名，拿到项目 ID（形如 `abcdefghij`）填进上面的 `id` 即可。它会把每个自定义事件记成 `event`，并把 `lib / type / value / label / mode / action / trigger / id` 作为标签上报，在 Clarity 后台的 **Filters** 里可以直接按这些标签筛会话录制。
 
 ### 上报的事件
 
