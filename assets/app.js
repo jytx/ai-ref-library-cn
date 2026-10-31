@@ -784,7 +784,7 @@ function renderCombo() {
   $("#poseRange").onchange = function (e) { COMBO.poseSeries = +e.target.value; comboReroll("pose"); };
   $("#costRange").onchange = function (e) { COMBO.costumeCat = +e.target.value; comboReroll("costume"); };
   $("#rerollAll").onclick = comboAll;
-  $("#count").textContent = "脸 × 服装 × 姿势";
+  $("#count").textContent = "已随机一组 · 每格可单独换";
 
   var x = comboParts();
   function slot(lib, title, base, desc, ratio) {
@@ -912,5 +912,5 @@ document.addEventListener("click", function (e) {
   });
 })();
 
-switchLib("face");
+switchLib("combo");
 })();
