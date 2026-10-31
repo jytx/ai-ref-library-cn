@@ -139,3 +139,15 @@ footer b{color:#3a3a42}
 /* ---------- 页脚简介 / 链接 ---------- */
 .foot-intro{margin:0 0 12px;font-size:12.5px;color:#4a4a52;line-height:1.7;max-width:900px}
 footer .links{margin:0 0 16px}
+
+/* ---------- 使用说明（hover 展开） ---------- */
+.tips-hover{position:relative;display:inline-block;margin-top:10px}
+.tips-trigger{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;color:#3a3a42;cursor:pointer}
+.tips-trigger:hover{border-color:#c9c9d2;color:#111}
+.tips-trigger::before{content:"▶";font-size:8px;color:#9a9aa4;margin-right:7px;display:inline-block;transition:transform .15s}
+.tips-hover:hover .tips-trigger::before,.tips-hover.open .tips-trigger::before{transform:rotate(90deg)}
+.tips-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:min(780px,92vw);max-height:66vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 14px 36px rgba(0,0,0,.13)}
+.tips-panel::before{content:"";position:absolute;top:-8px;left:0;right:0;height:8px}
+.tips-hover:hover .tips-panel,.tips-hover.open .tips-panel{display:block}
+.tips-panel ul{margin:0;padding-left:20px;font-size:13px;color:#3a3a42;line-height:1.65}
+.tips-panel li{margin:5px 0}

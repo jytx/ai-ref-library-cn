@@ -891,5 +891,26 @@ document.addEventListener("click", function (e) {
   }
 });
 
+/* ---------- 使用说明：hover 展开，点击/触摸兜底 ---------- */
+(function () {
+  var wrap = document.getElementById("tipsHover");
+  var btn = document.getElementById("tipsTrigger");
+  if (!wrap || !btn) return;
+  function setOpen(v) {
+    wrap.classList.toggle("open", v);
+    btn.setAttribute("aria-expanded", v ? "true" : "false");
+  }
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    setOpen(!wrap.classList.contains("open"));
+  });
+  document.addEventListener("click", function (e) {
+    if (!wrap.contains(e.target)) setOpen(false);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") setOpen(false);
+  });
+})();
+
 switchLib("face");
 })();
